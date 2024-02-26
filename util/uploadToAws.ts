@@ -43,11 +43,35 @@ export const uploadToAws = async (image: string, userId: string) => {
     });
 
     const uploadedImageBuffer = await downloadImage(presignedUrl);
-    const metaData = await sharp(uploadedImageBuffer).metadata;
-    
-  } catch (error) {}
+    const metaData = await sharp(uploadedImageBuffer).metadata();
+    const totalTokens = await calculateHighDetailImage(
+      metaData.width || 0,
+      metaData.height || 0
+    );
+    return { presignedUrl, totalTokens, key };
+  } catch (error) {
+    console.log("error at upload to aws", error);
+    throw error;
+  }
 };
 
+async function calculateHighDetailImage(width: number, height: number) {
+  let scalingFactor = Math.min(2048 / width, 2048 / height);
+
+  let scaledWidth = scalingFactor * width;
+  let scaledHeight = scalingFactor * height;
+
+  scalingFactor = 768 / Math.min(scaledWidth, scaledHeight);
+  scaledWidth = scalingFactor * scaledWidth;
+  scaledHeight = scalingFactor * scaledHeight;
+
+  const tileWide = Math.ceil(scaledWidth / 512);
+  const tileHigh = Math.ceil(scaledHeight / 512);
+
+  const totalTiles = tileWide * tileHigh;
+
+  return 85 + 170 * totalTiles;
+}
 async function convertSvgToPng(
   svgString: string
 ): Promise<{ pngBuffer: Buffer }> {

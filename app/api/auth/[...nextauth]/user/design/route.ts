@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAi from "openai";
 import { AuthOptions } from "../../AuthOptions";
 import prisma from "@/prisma/client";
+import { uploadToAws } from "@/util/uploadToAws";
 const OpenAI = new OpenAi({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -35,5 +36,25 @@ export async function POST(request: NextRequest) {
         status: 400,
       });
     }
+
+    const userId = userInfo.id;
+
+    const { presignedUrl, totalTokens, key } = await uploadToAws(svg, userId);
+
+    if (userInfo.credit < totalTokens) {
+      const additionalCreditRequired = totalTokens - userInfo.credit;
+      return NextResponse.json(
+        {
+          message: "Insufficient credit . additional credit required",
+          additionalCreditRequired,
+          currentBalance: userInfo.credit,
+        },
+        {
+          status: 402,
+        }
+      );
+    }
+
+    // openai
   } catch (error) {}
 }
