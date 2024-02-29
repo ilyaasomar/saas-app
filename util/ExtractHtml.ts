@@ -1,7 +1,7 @@
-export function extractHtml(text: string | null) {
-  const htmlPattern = /<\!DOCTYPE html>[\s\s]*<\/html>/i;
+export function extractHtml(text: string): string | null {
+  const htmlPattern = /<\!DOCTYPE html>[\s\S]*<\/html>/i;
 
-  const match = text?.match(htmlPattern);
+  const match = text.match(htmlPattern);
 
   return match ? match[0] : null;
 }

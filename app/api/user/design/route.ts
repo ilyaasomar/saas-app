@@ -4,6 +4,7 @@ import OpenAi from "openai";
 import { AuthOptions } from "../../auth/[...nextauth]/AuthOptions";
 import prisma from "@/prisma/client";
 import { uploadToAws } from "@/util/uploadToAws";
+import { extractHtml } from "@/util/ExtractHtml";
 const openAI = new OpenAi({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -82,10 +83,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const { svg } = await request.json();
+
     if (!svg) {
-      return NextResponse.json("image not provided", {
-        status: 400,
-      });
+      return NextResponse.json("image not provided", { status: 400 });
     }
 
     const userId = userInfo.id;
@@ -96,7 +96,8 @@ export async function POST(request: NextRequest) {
       key,
     } = await uploadToAws(svg, userId);
 
-    if (userInfo.credit < totalTokens) {
+    // 1075 means total token for the system prompt
+    if (userInfo.credit < totalTokens + 1075) {
       const additionalCreditRequired = totalTokens - userInfo.credit;
       return NextResponse.json(
         {
@@ -104,9 +105,7 @@ export async function POST(request: NextRequest) {
           additionalCreditRequired,
           currentBalance: userInfo.credit,
         },
-        {
-          status: 402,
-        }
+        { status: 402 }
       );
     }
 
@@ -131,12 +130,45 @@ export async function POST(request: NextRequest) {
 
     console.log("completion", completion);
 
-    // TODO: apply the credits
-    // TODO: response the html only
+    if (completion.usage) {
+      const htmlResult = extractHtml(completion.choices[0].message.content!);
 
-    return NextResponse.json(completion, { status: 200 });
+      if (!htmlResult) {
+        return NextResponse.json(completion.choices[0].message.content, {
+          status: 400,
+        });
+      }
+
+      try {
+        await prisma.user.update({
+          where: { email: userInfo?.email! },
+          data: {
+            credit: (userInfo.credit ?? 0) - completion.usage.total_tokens,
+          },
+        });
+
+        await prisma.generatedCode.create({
+          data: {
+            userId: userInfo.id,
+            code: htmlResult,
+            prompt_tokens: completion.usage.prompt_tokens,
+            completion_tokens: completion.usage.completion_tokens,
+            total_tokens: completion.usage.total_tokens,
+            wireFrameUrl: key,
+          },
+        });
+
+        return NextResponse.json(
+          { result: htmlResult, usage: completion.usage.total_tokens },
+          { status: 200 }
+        );
+      } catch (error) {
+        console.log("error updating credit", error);
+        return NextResponse.json("Error updating credit", { status: 500 });
+      }
+    }
   } catch (error) {
-    console.log("error at generating response");
+    console.log("error at generating response", error);
     return NextResponse.json("something went wrong please try again", {
       status: 400,
     });
