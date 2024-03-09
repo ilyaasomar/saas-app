@@ -4,8 +4,16 @@ import { API } from "@/util/api";
 import { useEditor } from "@tldraw/tldraw";
 import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
+interface DrawProps {
+  setDesignCode: (designCode: string) => void;
+  setOpen: (open: boolean) => void;
+}
 
-const GenerateButton = () => {
+interface ResponseErrorProps {
+  result: string;
+  usage: number;
+}
+const GenerateButton = ({ setDesignCode, setOpen }: DrawProps) => {
   const [loading, setLoading] = useState(false);
   const editor = useEditor();
   const handleGenerate = async () => {
@@ -42,9 +50,13 @@ const GenerateButton = () => {
         }
       }
 
-      const codeResult = await response.json();
+      const codeResult: ResponseErrorProps = await response.json();
 
-      console.log(codeResult);
+      if (!codeResult) {
+        throw new Error("message not provided please try again");
+      }
+      setDesignCode(codeResult.result);
+      setOpen(true);
     } catch (error) {
       console.error(error);
     } finally {
