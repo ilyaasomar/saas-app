@@ -1,27 +1,85 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { XIcon } from "lucide-react";
-import React from "react";
+import { CheckIcon, CopyIcon, XIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import TabButtons from "./TabButtons";
+
+import Prism from "prismjs";
+import "prismjs/components/prism-cshtml";
+import "prismjs/themes/prism-tomorrow.css";
+import { useCopyClipboard } from "@/util/useCopyClipboard";
+import { useRouter } from "next/navigation";
 
 interface PreviewProps {
   designCode: string;
   setOpen: (open: boolean) => void;
 }
 const Preview = ({ designCode, setOpen }: PreviewProps) => {
+  const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
+
+  useEffect(() => {
+    Prism.highlightAll();
+  }, [activeTab, designCode]);
+
+  const { isCopied, copy } = useCopyClipboard();
+  const router = useRouter();
   return (
     <dialog className="fixed inset-0 flex items-center justify-center z-[2222] bg-black/80 h-screen w-screen">
       <div className="bg-white h-[calc(100%-300px)] max-w-screen-lg w-full rounded-md shadow-md flex flex-col p-4">
         <header className="p-4 border-b flex items-center relative justify-center space-x-4">
-          <Button>Preview</Button>
-          <Button>Code</Button>
+          <TabButtons
+            onClick={() => setActiveTab("preview")}
+            activeTab={activeTab === "preview"}
+          >
+            Preview
+          </TabButtons>
+
+          <TabButtons
+            onClick={() => setActiveTab("code")}
+            activeTab={activeTab === "code"}
+          >
+            Code
+          </TabButtons>
           <Button
             className="absolute right-4 cursor-pointer"
             variant={"outline"}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              router.refresh();
+              setOpen(false);
+            }}
           >
             <XIcon />
           </Button>
         </header>
-        <iframe className="w-full h-full rounded-md mt-6" srcDoc={designCode} />
+        {/* display the preview and code */}
+        {activeTab === "preview" ? (
+          <iframe
+            className="w-full h-full rounded-md mt-6"
+            srcDoc={designCode}
+          />
+        ) : (
+          <pre className="overflow-auto relative w-full h-full">
+            {isCopied ? (
+              <Button
+                variant={"ghost"}
+                className="absolute right-4 cursor-pointer"
+              >
+                <CheckIcon />
+              </Button>
+            ) : (
+              <Button
+                variant={"ghost"}
+                className="absolute right-4 cursor-pointer"
+                onClick={() => copy(designCode)}
+              >
+                <CopyIcon />
+              </Button>
+            )}
+
+            <code className="language-markup">{designCode}</code>
+          </pre>
+        )}
       </div>
     </dialog>
   );

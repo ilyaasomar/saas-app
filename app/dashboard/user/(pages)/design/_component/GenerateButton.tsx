@@ -4,6 +4,7 @@ import { API } from "@/util/api";
 import { useEditor } from "@tldraw/tldraw";
 import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
 interface DrawProps {
   setDesignCode: (designCode: string) => void;
   setOpen: (open: boolean) => void;
@@ -57,8 +58,18 @@ const GenerateButton = ({ setDesignCode, setOpen }: DrawProps) => {
       }
       setDesignCode(codeResult.result);
       setOpen(true);
+      toast.success(
+        `you have spent ${codeResult.usage} credits on this wireframe`,
+        { duration: 9000, style: { zIndex: 8888888 } }
+      );
     } catch (error) {
       console.error(error);
+      if (error instanceof Error) {
+        toast.error(error.message, {
+          duration: 8000,
+          position: "bottom-right",
+        });
+      }
     } finally {
       setLoading(false);
     }
