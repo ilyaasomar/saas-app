@@ -59,7 +59,7 @@ export const columns: ColumnDef<GeneratedToken>[] = [
           >
             Preview
           </Button>
-          <DeleteAlertDialog />
+          <DeleteAlertDialog id={designInfo.id} />
         </div>
       );
     },
