@@ -4,6 +4,7 @@ import DeleteAlertDialog from "@/app/dashboard/_components/DeleteAlertDialog";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -48,14 +49,15 @@ export const columns: ColumnDef<GeneratedToken>[] = [
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
+      const router = useRouter();
       const designInfo = row.original;
       return (
         <div className="space-x-2">
           <Button
             variant={"outline"}
-            // onClick={() =>
-            //   router.push(`/dashboard/user/design?code=${designInfo.id}`)
-            // }
+            onClick={() =>
+              router.push(`/dashboard/user/design?code=${designInfo.id}`)
+            }
           >
             Preview
           </Button>
