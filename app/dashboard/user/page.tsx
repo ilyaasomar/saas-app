@@ -10,7 +10,7 @@ const UserPage = async () => {
     <div className="my-4 space-y-4 sm:p-6 lg:p-2">
       <NewCodeButton />
       {/* table */}
-      <DataTable columns={columns} data={data} />
+      <DataTable columns={columns} data={data} filter={"total_tokens"} />
     </div>
   );
 };
