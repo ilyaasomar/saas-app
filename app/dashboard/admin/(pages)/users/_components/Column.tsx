@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-// import DeleteAlertDialog from "../../_components/DeleteAlertDialog"
 import { useRouter } from "next/navigation";
-// import UpdateForm from "./UpdateForm"
+import UpdateForm from "./UpdateForm";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type UserProps = {
@@ -54,7 +53,7 @@ export const columns: ColumnDef<UserProps>[] = [
       const router = useRouter();
       return (
         <div className="space-x-2">
-          {/* <UpdateForm id={userInfo.id!} credit={userInfo.credit!} /> */}
+          <UpdateForm id={userInfo.id!} credit={userInfo.credit!} />
           {/* <DeleteAlertDialog id={designInfo.id} /> */}
         </div>
       );
