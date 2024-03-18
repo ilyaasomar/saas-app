@@ -1,8 +1,9 @@
-import { getServerSession } from "next-auth";
-import { AuthOptions } from "./api/auth/[...nextauth]/AuthOptions";
+import Hero from "./_components/providers/Hero";
 
 export default async function Home() {
-  const session = await getServerSession(AuthOptions);
-  console.log(session);
-  return <main>Hello {session?.user?.name}</main>;
+  return (
+    <main>
+      <Hero />
+    </main>
+  );
 }
