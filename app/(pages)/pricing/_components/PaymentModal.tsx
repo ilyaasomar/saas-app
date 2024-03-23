@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { FaStripe } from "react-icons/fa6";
+import { API } from "@/util/api";
+import { toast } from "sonner";
 const deliveryMethods = [
   {
     id: 1,
@@ -51,7 +53,16 @@ const paymentMethods = [
   },
 ];
 
-const PaymentModal = ({ className }: { className: string }) => {
+interface PaymentModalProps {
+  className: string;
+  tier: {
+    id: string;
+    name: string;
+    price: number;
+    credits: number;
+  };
+}
+const PaymentModal = ({ className, tier }: PaymentModalProps) => {
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(
     deliveryMethods[0]
   );
@@ -74,6 +85,29 @@ const PaymentModal = ({ className }: { className: string }) => {
     }
   }, [selectedDeliveryMethod]);
 
+  const handleStripeSession = async () => {
+    const { credits, name, id, price } = tier;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API}/user/stripeSession`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          credits,
+          name,
+          price,
+        }),
+      });
+      const data = await response.json();
+      window.location.href = data.url;
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed at stripe session");
+      setLoading(false);
+    }
+  };
   return (
     <Dialog>
       <DialogTrigger className={className}>Buy Plan</DialogTrigger>
@@ -107,10 +141,14 @@ const PaymentModal = ({ className }: { className: string }) => {
             </div>
             {currentPaymentType === "online" ? (
               <div className="mt-8 flex gap-4 w-full justify-center">
-                <button type="button" className="w-full">
+                <button
+                  onClick={handleStripeSession}
+                  type="button"
+                  className="w-full"
+                >
                   <div className="cursor-pointer rounded-lg border p-4 shadow-sm hover:border-rose-500 w-full flex justify-center items-center space-x-2">
                     <h4 className="text-md font-medium text-gray-900">
-                      Pay With
+                      {loading ? "Processing" : "Pay With"}
                     </h4>
                     <FaStripe className="w-10 h-10" />
                   </div>
