@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { FaStripe } from "react-icons/fa6";
 import { API } from "@/util/api";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 const deliveryMethods = [
   {
     id: 1,
@@ -75,6 +76,8 @@ const PaymentModal = ({ className, tier }: PaymentModalProps) => {
 
   const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     const currentMethod = deliveryMethods.find(
       (method) => method.id === selectedDeliveryMethod.id
@@ -108,12 +111,42 @@ const PaymentModal = ({ className, tier }: PaymentModalProps) => {
       setLoading(false);
     }
   };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const { credits, name, id, price } = tier;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API}/user/localPayment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          credits,
+          name,
+          price,
+          phone: selectedPaymentMethod.code + selectedPaymentMethod.phone,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Something went wrong please try again");
+      }
+
+      setLoading(false);
+      toast.success("Payment successful thanks");
+      router.push("/dashboard/user");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed at local payment session");
+      setLoading(false);
+    }
+  };
   return (
     <Dialog>
       <DialogTrigger className={className}>Buy Plan</DialogTrigger>
       <DialogContent>
         <div className="inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom  transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="mt-10">
               <h3 className="text-lg font-medium text-gray-900">
                 Delivery Method
