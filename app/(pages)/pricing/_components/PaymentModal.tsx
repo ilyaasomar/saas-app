@@ -13,6 +13,7 @@ import { FaStripe } from "react-icons/fa6";
 import { API } from "@/util/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 const deliveryMethods = [
   {
     id: 1,
@@ -117,27 +118,21 @@ const PaymentModal = ({ className, tier }: PaymentModalProps) => {
     const { credits, name, id, price } = tier;
     setLoading(true);
     try {
-      const response = await fetch(`${API}/user/localPayment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          credits,
-          name,
-          price,
-          phone: selectedPaymentMethod.code + selectedPaymentMethod.phone,
-        }),
+      const response = await axios.post(`${API}/user/localPayment`, {
+        id,
+        credits,
+        name,
+        price,
+        phone: selectedPaymentMethod.code + selectedPaymentMethod.phone,
       });
-      if (!response.ok) {
-        throw new Error("Something went wrong please try again");
-      }
 
       setLoading(false);
       toast.success("Payment successful thanks");
       router.push("/dashboard/user");
     } catch (error) {
       console.error(error);
-      toast.error("Failed at local payment session");
+      // @ts-ignore
+      toast.error(error.response.data);
       setLoading(false);
     }
   };
