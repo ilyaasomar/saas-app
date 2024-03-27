@@ -27,13 +27,16 @@ export const AuthOptions: NextAuthOptions = {
       token.user = userInfo;
       return token;
     },
+
     session: async ({ session, token }) => {
       session.user = token.user!;
       return session;
     },
   },
+
   session: {
     strategy: "jwt",
   },
+
   adapter: PrismaAdapter(prisma),
 };
